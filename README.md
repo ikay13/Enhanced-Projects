@@ -474,3 +474,36 @@ If the user wants to revert to the previous Jetson Linux version (for example, i
 The backup mechanism is designed to be robust: even if you upgrade through multiple versions (say from 35.3.1 to 35.4.1, then to 36.4.4), each step’s original files are saved in its own backup folder. You can revert step-by-step or all the way back, as needed. (However, note that user-space libraries from different JetPack versions are not automatically handled by this script – it focuses on the Linux kernel and low-level BSP components. In practice, minor JetPack differences should not break basic functionality if only the kernel is swapped, but major version changes between Ubuntu 20.04 and 22.04, for example, could have incompatibilities in user-space. The script assumes the primary interest is kernel customization or minor version transitions.)
 
 With the logic described, let's now review the actual script code. The code is heavily commented for clarity, and it prints explanatory messages to the console during execution (unless -q quiet mode is used). Each section of code is preceded by an explanation comment to indicate its purpose.
+
+
+
+Usage Example
+
+Suppose you have a Jetson AGX Orin running Jetson Linux 35.3.1 (JetPack 5.1.1) and you want to upgrade to Jetson Linux 36.4.4 (JetPack 6.2.1) to take advantage of the new Ubuntu 22.04 base and kernel 5.15. You would do the following:
+
+    (1) Download the Jetson_Linux_R36.4.4_aarch64.tbz2 and public_sources.tbz2 files from NVIDIA’s Jetson Linux 36.4.4 page 
+    (the script will provide you the link and file names).
+
+    (2) Place those files in your ~/Downloads directory on the Jetson.
+
+    (3) Run the script `sudo ./jetson_kernel_manager.sh`.
+
+    (4) When prompted for the target version, you could enter “JetPack 6.2.1” or “36.4.4” – the script will recognize either. 
+    It will confirm that this corresponds to Jetson Linux 36.4.4 with kernel 5.15 on Ubuntu 22.04.
+
+    (5) The script will then detect the tarballs, extract them, compile the new kernel and modules, backup your current 
+    kernel and modules (saving them under /usr/local/src/L4T/35.3.1_backup), and install the new kernel and modules.
+
+    (6) After completion, you reboot the Jetson. It should boot up into Jetson Linux 36.4.4. You can verify by running 
+    `uname -a` (to see the kernel version) and checking `cat /etc/nv_tegra_release` (to see the L4T release string, which should 
+    show R36, Revision 4.4).
+
+If anything goes wrong or if you need to revert to the previous 35.3.1 environment, you can run the script with the revert option: sudo ./jetson_kernel_manager.sh --revert. The script will find the backup for 35.3.1 and restore all the files. After a reboot, you’ll be back on the old JetPack 5.1.1 setup, as if nothing happened.
+
+
+
+Conclusion
+
+This script simplifies managing Jetson Linux versions by automating the tedious parts and wrapping them in a safe, interactive workflow. It ensures that users are clearly informed of what is happening at each step (with the ability to suppress details for advanced use) and that they have an easy escape route (through backups and revert functionality) if something doesn’t work out.
+
+By handling version mapping and file management, the script helps avoid common pitfalls (such as using the wrong kernel sources or forgetting to update the initramfs) and thus can save developers time and effort. Users can confidently experiment with new JetPack releases or custom kernel builds, knowing they can revert to a known-good state if needed.
